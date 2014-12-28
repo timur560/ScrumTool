@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.chart.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="719.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="scrumtool.FXMLMainController">
+   <children>
+      <VBox prefHeight="450.0" prefWidth="225.0">
+         <children>
+            <Accordion prefHeight="379.0" prefWidth="267.0">
+              <panes>
+                <TitledPane prefHeight="347.0" prefWidth="247.0" text="Sprint Setup">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="173.0" prefWidth="280.0">
+                           <children>
+                              <Label layoutX="14.0" layoutY="14.0" text="Start Date:" />
+                              <DatePicker fx:id="startDate" layoutX="15.0" layoutY="29.0" onAction="#dateIntervalChanged" />
+                              <Label layoutX="14.0" layoutY="60.0" text="End Date:" />
+                              <DatePicker fx:id="endDate" layoutX="15.0" layoutY="75.0" onAction="#dateIntervalChanged" />
+                              <Label layoutX="15.0" layoutY="109.0" text="Total hrs. or SPs were taken:" />
+                              <TextField fx:id="totalTextField" layoutX="16.0" layoutY="124.0" prefHeight="25.0" prefWidth="197.0" promptText="0" />
+                           </children>
+                        </AnchorPane>
+                  </content>
+                </TitledPane>
+                <TitledPane prefHeight="416.0" prefWidth="271.0" text="Sprint Progress">
+                     <content>
+                        <AnchorPane>
+                           <children>
+                              <TableView fx:id="progressTable" editable="true" layoutX="11.0" layoutY="27.0" prefHeight="286.0" prefWidth="248.0">
+                                <columns>
+                                  <TableColumn fx:id="dayTableCol" editable="false" prefWidth="115.0" sortable="false" text="Day" />
+                                  <TableColumn fx:id="hrsLeftTableCol" prefWidth="106.0" sortType="DESCENDING" sortable="false" text="Hrs./SPs left" />
+                                </columns>
+                              </TableView>
+                           </children>
+                        </AnchorPane>
+                     </content>
+                </TitledPane>
+              </panes>
+            </Accordion>
+            <Pane prefHeight="79.0" prefWidth="271.0">
+               <children>
+                  <Button layoutX="222.0" layoutY="15.0" mnemonicParsing="false" onAction="#buildButtonClick" text="Build" />
+               </children>
+            </Pane>
+         </children>
+      </VBox>
+      <LineChart fx:id="burnDownChart" HBox.hgrow="ALWAYS">
+        <xAxis>
+          <CategoryAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis side="LEFT" />
+        </yAxis>
+      </LineChart>
+   </children>
+</HBox>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="478.0" prefWidth="636.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="scrumtool.FXMLDocumentController">
+   <children>
+      <Label layoutX="14.0" layoutY="24.0" text="Days:" />
+      <Label layoutX="14.0" layoutY="60.0" text="Values:" />
+      <TextField fx:id="daysTextField" layoutX="90.0" layoutY="19.0" prefHeight="26.0" prefWidth="427.0" promptText="Labels for &quot;x&quot; separated by comma" />
+      <TextField fx:id="valuesTextField" layoutX="90.0" layoutY="55.0" prefHeight="26.0" prefWidth="427.0" promptText="Labels for &quot;y&quot; separated by comma" />
+      <Button layoutX="532.0" layoutY="55.0" mnemonicParsing="false" onAction="#handleButtonAction" text="Build Graph" />
+      <LineChart fx:id="burnDownChart" layoutX="14.0" layoutY="81.0" prefHeight="400.0" prefWidth="612.0">
+        <xAxis>
+          <CategoryAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis side="LEFT" />
+        </yAxis>
+      </LineChart>
+   </children>
+</AnchorPane>
