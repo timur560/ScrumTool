@@ -7,8 +7,13 @@ package scrumtool;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Camera;
+import javafx.scene.Group;
 import javafx.scene.Parent;
+import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -24,7 +29,16 @@ public class ScrumTool extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("FXMLMain.fxml"));
         
         Scene scene = new Scene(root);
-        
+        scene.setCamera(new PerspectiveCamera());
+     
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
+
+        stage.setX(bounds.getMinX() + 10);
+        stage.setY(bounds.getMinY() + 10);
+        stage.setWidth(bounds.getWidth() - 20);
+        stage.setHeight(bounds.getHeight() - 20);
+
         stage.setScene(scene);
         stage.show();
     }
