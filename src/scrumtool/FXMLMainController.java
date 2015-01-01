@@ -6,19 +6,14 @@
 package scrumtool;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.collections.FXCollections;
@@ -28,24 +23,21 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.PerspectiveCamera;
+import javafx.geometry.Bounds;
+import javafx.print.PageLayout;
+import javafx.print.Printer;
+import javafx.print.PrinterJob;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.TableColumn;
+import javafx.scene.control.*;
 import javafx.scene.control.TableColumn.CellEditEvent;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.Region;
-import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.converter.NumberStringConverter;
 import javax.imageio.ImageIO;
 
@@ -70,11 +62,15 @@ public class FXMLMainController implements Initializable {
 
     @FXML
     private ToggleButton moTB, tuTB, weTB, thTB, frTB, saTB, suTB;
-    
-            
             
     ObservableList<SprintDay> sprintDays;
 
+    private Stage stage;
+    
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+    
     /**
      * Initializes the controller class.
      */
@@ -86,6 +82,21 @@ public class FXMLMainController implements Initializable {
         totalTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             dateIntervalChanged();
         });
+
+        dayTableCol.setCellValueFactory(new PropertyValueFactory<>("day"));
+        hrsLeftTableCol.setCellValueFactory(new PropertyValueFactory<>("hrsLeft"));
+
+        hrsLeftTableCol.setCellFactory(TextFieldTableCell.<SprintDay, Number>forTableColumn(new NumberStringConverter()));
+        hrsLeftTableCol.setOnEditCommit(
+            new EventHandler<CellEditEvent<SprintDay, Number>>() {
+                @Override
+                public void handle(CellEditEvent<SprintDay, Number> t) {
+                    ((SprintDay) t.getTableView().getItems().get(
+                        t.getTablePosition().getRow())
+                        ).setHrsLeft(t.getNewValue().intValue());
+                }
+            }
+        );   
     }    
 
     private void dateIntervalChanged() {
@@ -106,21 +117,6 @@ public class FXMLMainController implements Initializable {
         }
         
         sprintDays = getSprintDays(sDate, eDate);
-        
-        dayTableCol.setCellValueFactory(new PropertyValueFactory<>("day"));
-        hrsLeftTableCol.setCellValueFactory(new PropertyValueFactory<>("hrsLeft"));
-
-        hrsLeftTableCol.setCellFactory(TextFieldTableCell.<SprintDay, Number>forTableColumn(new NumberStringConverter()));
-        hrsLeftTableCol.setOnEditCommit(
-            new EventHandler<CellEditEvent<SprintDay, Number>>() {
-                @Override
-                public void handle(CellEditEvent<SprintDay, Number> t) {
-                    ((SprintDay) t.getTableView().getItems().get(
-                        t.getTablePosition().getRow())
-                        ).setHrsLeft(t.getNewValue().intValue());
-                }
-            }
-        );        
         progressTable.setItems(sprintDays);
     }
         
@@ -134,6 +130,30 @@ public class FXMLMainController implements Initializable {
         buildGraph();
     }
 
+    @FXML
+    private void print(ActionEvent event) {
+        PrinterJob printerJob = PrinterJob.createPrinterJob();
+        
+        if (printerJob != null) {
+            
+            if (printerJob.showPrintDialog(stage.getOwner())) {
+                PageLayout pageLayout = printerJob.getJobSettings().getPageLayout();
+                double scaleX = pageLayout.getPrintableWidth() / burnDownChart.getBoundsInParent().getWidth();
+                double scaleY = pageLayout.getPrintableHeight() / burnDownChart.getBoundsInParent().getHeight();
+                burnDownChart.getTransforms().add(new Scale(scaleX, scaleY));
+                
+                if (printerJob.printPage(burnDownChart)) { // .lookup(".chart")
+                    printerJob.endJob();
+                }
+                
+                burnDownChart.getTransforms().clear();
+            }
+        } else {
+            showMessage("No printers", "There are no printers installed in the system.", "Error", Alert.AlertType.ERROR);
+        }
+
+    }
+    
     @FXML
     private void quitApplication(ActionEvent event) {
         if (showConfirmationMessage("Quit application", "Are you sure?", "Confirm").get() == ButtonType.OK) {
@@ -153,17 +173,49 @@ public class FXMLMainController implements Initializable {
 
     @FXML
     private void saveAs(ActionEvent event) {
-        saveSprintToFile();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save sptint");
+        fileChooser.setInitialFileName("Untitled.spt");
+
+        file = fileChooser.showSaveDialog(null);
+        if (file != null) {
+            saveSprintToFile(file);
+        }
+    }
+
+    @FXML
+    private void newSprint(ActionEvent event) {
+        if (showConfirmationMessage("Unsaved changes can be lost.", "Dismiss?", "New sprint").get() == ButtonType.OK) {
+            startDate.setValue(null);
+            endDate.setValue(null);
+            totalTextField.setText("");
+            
+            sprintDays.clear();
+            progressTable.setItems(sprintDays);
+            
+            burnDownChart.getData().clear();
+            
+            file = null;
+            
+            stage.setTitle("Scrum Tool");
+        }
     }
     
     @FXML
     private void save(ActionEvent event) {
-        // saveSprintToFile();
+        saveSprintToFile(file);
     }
 
     @FXML
-    private void openSprintFile(ActionEvent event) {
-        openSprintFile();
+    private void open(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open sprint file");
+
+        file = fileChooser.showOpenDialog(stage);
+        
+        if (file != null) {
+            openSprintFile(file);
+        }
     }
     
     private ObservableList<SprintDay> getSprintDays(LocalDate sDate, LocalDate eDate) {
@@ -190,6 +242,10 @@ public class FXMLMainController implements Initializable {
     
     private void buildGraph() {
         burnDownChart.getData().clear();
+        
+        if (progressTable.getItems().size() == 0) {
+            return;
+        }
 
         List<String> categories = new ArrayList<>();
 
@@ -267,27 +323,102 @@ public class FXMLMainController implements Initializable {
         }
     }
     
-    public void saveSprintToFile() {
+    private static File file = null;
+    
+    public void saveSprintToFile(File file) {
         try {
             WritableImage snapShot = burnDownChart.snapshot(null, null);
 
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Save sptint");
-            fileChooser.setInitialFileName("Untitled.spt");
-            File file = fileChooser.showSaveDialog(null);
+            if (file == null) {
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Save sptint");
+                fileChooser.setInitialFileName("Untitled.spt");
+
+                file = this.file = fileChooser.showSaveDialog(null);
+            }
             
             if (file != null) {
-                PrintWriter in = new PrintWriter(file);
-                in.println("sDate=" + startDate.getValue().format(DateTimeFormatter.ISO_DATE));
-                in.println("eDate=" + endDate.getValue().format(DateTimeFormatter.ISO_DATE));
-                in.close();
+                PrintWriter out = new PrintWriter(file);
+                out.println("startDate=" + ((startDate.getValue() == null) ? "" : startDate.getValue().format(DateTimeFormatter.ISO_DATE)));
+                out.println("endDate=" + ((endDate.getValue() == null) ? "" : endDate.getValue().format(DateTimeFormatter.ISO_DATE)));
+                out.println("total=" + totalTextField.getText());
+                List<String> days = new ArrayList<>();
+                if (moTB.selectedProperty().getValue()) {days.add("mo");}
+                if (tuTB.selectedProperty().getValue()) {days.add("tu");}
+                if (weTB.selectedProperty().getValue()) {days.add("we");}
+                if (thTB.selectedProperty().getValue()) {days.add("th");}
+                if (frTB.selectedProperty().getValue()) {days.add("fr");}
+                if (saTB.selectedProperty().getValue()) {days.add("sa");}
+                if (suTB.selectedProperty().getValue()) {days.add("su");}
+
+                out.println("days=" + String.join(",", days));
+                out.println("tableData:");
+                for (SprintDay sd : progressTable.getItems()) {
+                    out.println(sd.dayProperty().getValue() + ":" + sd.hrsLeftProperty().getValue());
+                }
+                out.println("tableData;");
+                out.close();
+                
+                stage.setTitle("Scrum Tool | " + file.getName());
             }
         } catch (IOException ex) {
             Logger.getLogger(FXMLMainController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void openSprintFile() {
-        // TODO:
+    public void openSprintFile(File file) {
+        try {
+            Scanner in = new Scanner(file);
+            String s;
+            int i =  0;
+            boolean isTableData = false;
+            ObservableList<SprintDay> tableData = FXCollections.observableArrayList();
+            
+            while (in.hasNext() && i++ < 100) {
+                s = in.nextLine();
+                if (isTableData) {
+                    if (s.contains("tableData;")) {
+                        progressTable.setItems(tableData);
+                        isTableData = false;
+                    } else {
+                        tableData.add(new SprintDay(s.split(":")[0], Integer.parseInt(s.split(":")[1])));
+                    }
+                } else if (s.indexOf("startDate=") == 0) {
+                    startDate.setValue(LocalDate.parse(s.substring(s.indexOf("=") + 1), DateTimeFormatter.ISO_DATE));
+                } else if (s.indexOf("endDate=") == 0) {
+                    endDate.setValue(LocalDate.parse(s.substring(s.indexOf("=") + 1), DateTimeFormatter.ISO_DATE));
+                } else if (s.indexOf("total=") == 0) {
+                    totalTextField.setText(s.substring(s.indexOf("=") + 1));
+                } else if (s.indexOf("days=") == 0) {
+                    moTB.setSelected(false);
+                    tuTB.setSelected(false);
+                    weTB.setSelected(false);
+                    thTB.setSelected(false);
+                    frTB.setSelected(false);
+                    saTB.setSelected(false);
+                    suTB.setSelected(false);
+                    for (String day : s.substring(s.indexOf("=") + 1).split(",")) {
+                        switch (day) {
+                            case "mo": moTB.setSelected(true); break;
+                            case "tu": tuTB.setSelected(true); break;
+                            case "we": weTB.setSelected(true); break;
+                            case "th": thTB.setSelected(true); break;
+                            case "fr": frTB.setSelected(true); break;
+                            case "sa": saTB.setSelected(true); break;
+                            case "su": suTB.setSelected(true); break;
+                        }
+                    }
+                } else if (s.contains("tableData:")) {
+                    isTableData = true;
+                }
+            }
+            
+            stage.setTitle("Scrum Tool | " + file.getName());
+            
+            buildGraph();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(FXMLMainController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }
 }

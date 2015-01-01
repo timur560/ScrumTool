@@ -26,7 +26,14 @@ public class ScrumTool extends Application {
     public void start(Stage stage) throws Exception {
         stage.setTitle("Scrum Tool");
         
-        Parent root = FXMLLoader.load(getClass().getResource("FXMLMain.fxml"));
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("FXMLMain.fxml"));
+        
+        Parent root = loader.load(); // FXMLLoader.load(getClass().getResource("FXMLMain.fxml"));
+
+        FXMLMainController c = loader.getController();
+        c.setStage(stage);
+
         
         Scene scene = new Scene(root);
         scene.setCamera(new PerspectiveCamera());
@@ -34,10 +41,10 @@ public class ScrumTool extends Application {
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
 
-        stage.setX(bounds.getMinX() + 10);
-        stage.setY(bounds.getMinY() + 10);
-        stage.setWidth(bounds.getWidth() - 20);
-        stage.setHeight(bounds.getHeight() - 20);
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
 
         stage.setScene(scene);
         stage.show();

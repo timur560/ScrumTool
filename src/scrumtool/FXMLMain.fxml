@@ -11,9 +11,12 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
-              <MenuItem mnemonicParsing="false" text="Open..." onAction="#openSprintFile" />
+              <MenuItem mnemonicParsing="false" text="New" onAction="#newSprint" />
+              <MenuItem mnemonicParsing="false" text="Open..." onAction="#open" />
               <MenuItem mnemonicParsing="false" text="Save" onAction="#save" />
               <MenuItem mnemonicParsing="false" text="Save as..." onAction="#saveAs" />
+              <SeparatorMenuItem />
+              <MenuItem mnemonicParsing="false" text="Print" onAction="#print" />
               <SeparatorMenuItem />
               <MenuItem mnemonicParsing="false" text="Export to PNG..." onAction="#exportToImageFile" />
               <SeparatorMenuItem />
