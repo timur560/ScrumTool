@@ -13,6 +13,7 @@ import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -46,6 +47,8 @@ public class ScrumTool extends Application {
         stage.setWidth(bounds.getWidth());
         stage.setHeight(bounds.getHeight());
 
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/images/icon.png")));        
+        
         stage.setScene(scene);
         stage.show();
     }
